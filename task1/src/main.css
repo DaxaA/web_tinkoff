@@ -1,0 +1,144 @@
+/* тоже самое что и в main.less */
+.title {
+  font: var(--font-h2);
+  color: var(--text-01);
+  display: flex;
+  justify-content: center;
+  margin-bottom: 48px;
+  margin-top: 76px;
+}
+.title-start {
+  margin-bottom: 20px;
+  margin-top: 48px;
+}
+.start-p {
+  text-align: center;
+}
+
+.start-img-block {
+  display: flex;
+  justify-content: center;
+}
+.icons {
+  width: 36px;
+  height: 36px;
+}
+
+.button {
+  width: 150px;
+  height: 56px;
+  background: var(--primary);
+  border-radius: 8px;
+  border: 0;
+  display: block;
+  margin: 40px auto 64px;
+}
+
+.button:active {
+  background-color: var(--primary-active);
+}
+
+.button:hover {
+  background-color: var(--primary-hover);
+}
+
+.button:focus {
+  background-color: #ffdd2d;
+}
+
+.lastblock {
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+  width: 240px;
+  height: 160px;
+  top: 28px;
+  padding: 32px;
+  border-radius: var(--radius-l);
+  background-color: var(--base-01);
+}
+
+.freeblock {
+  padding: 32px;
+  border-radius: var(--radius-l);
+  background-color: var(--base-01);
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.block {
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100%;
+  padding: 32px;
+  border-radius: var(--radius-l);
+  background-color: var(--base-01);
+}
+
+.block__title {
+  font: var(--font-h4);
+  color: var(--text-01);
+  margin-bottom: 16px;
+  margin-top: 0;
+  align-self: flex-start;
+}
+
+.block_info {
+  font: var(--font-text-s);
+  color: var(--text-01);
+  margin: 0;
+  width: 464px;
+  height:176px;
+  gap: 12px;
+}
+
+.block-num {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--base-04);
+  border-radius: 16px;
+}
+
+.list-info {
+  margin-left: 30px;
+}
+.list-info li {
+  position: relative;
+  font-size: 15px;
+  line-height: 24px;
+  list-style: none;
+}
+.list-info li::before {
+  content: ' ';
+  position: absolute;
+  display: block;
+  width: 12px;
+  height: 2px;
+  top: 10px;
+  left: -21px;
+  border-radius: 1px;
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+@media screen and (max-width: 599px) {
+  *:has(.block) {
+    margin-bottom: 24px;
+  }
+}
+
+@media screen and (max-width: 1023px) {
+  *:has(.block) {
+    margin-bottom: 24px;
+  }
+}
