@@ -1,0 +1,12 @@
+.header-wrap{
+    display:grid;
+    grid-template-columns: 1fr min-content;
+    box-shadow: -3px 12px 8px rgba(34, 60, 80, 0.2);
+    margin-bottom: 50px;
+    height: 70px;
+}
+.header-title{
+    width: 400px;
+    margin-left: 20px;
+    align-self: center;
+}
