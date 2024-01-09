@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Мое приложение</title>
+  <style>
+    /* Оформление заголовков */
+    .heading {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    /* Оформление формы */
+    .form {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 5px;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      height: 100px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    /* Оформление контейнера для карточек */
+    .card-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 class="heading">Мое приложение</h1>
+
+  <h2>Форма создания/редактирования карточки</h2>
+  <form class="form" id="card-form">
+    <label for="name">Имя:</label>
+    <input type="text" id="name" required>
+
+    <label for="description">Описание:</label>
+    <textarea id="description" required></textarea>
+
+    <label for="image-url">Ссылка на изображение:</label>
+    <input type="url" id="image-url" required>
+
+    <label for="product-code">Код товара:</label>
+    <input type="text" id="product-code" required>
+
+    <label for="provider">Поставщик:</label>
+    <input type="text" id="provider" required>
+
+    <button type="button" onclick="saveCard()">Сохранить</button>
+  </form>
+
+  <h2>Карточки</h2>
+  <div class="card-container" id="card-container">
+    <!-- Карточки будут динамически добавлены и отображены здесь -->
+  </div>
+
+  <script>
+    // Хранилище карточек
+    let cards = [];
+
+    function sendRequest(method, url, data) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(xhr.response);
+          } else {
+            reject(xhr.statusText);
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(xhr.statusText);
+        };
+
+        xhr.send(JSON.stringify(data));
+      });
+    }
+
+    // Функция для сохранения карточки
+    function saveCard() {
+      const name = document.getElementById('name').value;
+      const description = document.getElementById('description').value;
+      const imageUrl = document.getElementById('image-url').value;
+      const productCode = document.getElementById('product-code').value;
+      const provider = document.getElementById('provider').value;
+
+      // Проверяем, что все поля заполнены
+      if (name && description && imageUrl && productCode && provider) {
+        const card = {
+          name,
+          description,
+          imageUrl,
+          productCode,
+          provider
+        };
+
+        sendRequest('POST', '/db.json', card)
+                .then(response => {
+                  renderCards();
+                  clearForm();
+
+                  alert("Карточка успешно сохранена!");
+                })
+                .catch(error => {
+                  console.error(error);
+                  alert("Произошла ошибка при сохранении карточки.");
+                });
+      } else {
+        // Если не все поля заполнены, выводим сообщение об ошибке
+        alert("Пожалуйста, заполните все поля формы.");
+      }
+    }
+
+    // Функция для отображения карточек
+    function renderCards() {
+      sendRequest('GET', '/db.json')
+              .then(response => {
+                const cards = JSON.parse(response);
+                const cardContainer = document.getElementById('card-container');
+                cardContainer.innerHTML = '';
+
+                cards.forEach(card => {
+                  const cardEl = document.createElement('div');
+                  cardEl.classList.add('card');
+                  cardEl.innerHTML = '<h3>${card.name}</h3>\n' +
+                          '<p>${card.description}</p>\n' +
+                          '<img src="${card.imageUrl}" alt="${card.name}">\n' +
+                          '<p>Код товара: ${card.productCode}</p>\n' +
+                          '<p>Поставщик: ${card.provider}</p>\n' +
+                          '<button onclick="editCard(${card.id})">Редактировать</button>';
+
+                  cardContainer.appendChild(cardEl);
+                });
+              })
+              .catch(error => {
+                console.error(error);
+                alert("Произошла ошибка при загрузке карточек.");
+              });
+    }
+
+    // Функция для редактирования карточки
+    function editCard(index) {
+      const card = cards[index];
+      const updateData = {
+        name: document.getElementById('name').value,
+        description: document.getElementById('description').value,
+        imageUrl: document.getElementById('image-url').value,
+        productCode: document.getElementById('product-code').value,
+        provider: document.getElementById('provider').value
+      };
+      sendRequest('PUT', '/db.json', updateData)
+              .then(response => {
+                cards[index] = response.data;
+                renderCards();
+              })
+              .catch(error => {
+                console.error('Error updating card', error);
+              });
+    }
+
+    // Функция для удаления карточки
+    function deleteCard(index) {
+      const cardId = cards[index].id;
+      sendRequest('DELETE', '/db.json').then(() => {
+        cards.splice(index, 1);
+        renderCards();
+      }).catch((error) => {
+        console.error('Error deleting card:', error);
+      });
+    }
+
+    // Функция для очистки формы
+    function clearForm() {
+      document.getElementById('name').value = '';
+      document.getElementById('description').value = '';
+      document.getElementById('image-url').value = '';
+      document.getElementById('product-code').value = '';
+      document.getElementById('provider').value = '';
+    }
+
+    window.addEventListener('load', () => {
+      sendRequest('GET', '/db.json')
+              .then((response) => {
+                renderCards(response);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
+    });
+
+    // Сохраняем карточки перед закрытием страницы
+    window.addEventListener('beforeunload', () => {
+      sendRequest('POST', '/db.json', { cards: cards })
+              .then((response) => {
+                console.log('Сохранение успешное:', response);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
+    });
+  </script>
+</div>
+</body>
+</html>
