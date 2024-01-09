@@ -88,6 +88,28 @@
     // Хранилище карточек
     let cards = [];
 
+    function sendRequest(method, url, data) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(xhr.response);
+          } else {
+            reject(xhr.statusText);
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(xhr.statusText);
+        };
+
+        xhr.send(JSON.stringify(data));
+      });
+    }
+
     // Функция для сохранения карточки
     function saveCard() {
       const name = document.getElementById('name').value;
@@ -106,13 +128,17 @@
           provider
         };
 
-        cards.push(card);
-        renderCards();
-        clearForm();
+        sendRequest('POST', '/db.json', card)
+                .then(response => {
+                  renderCards();
+                  clearForm();
 
-        // Обновляем список карточек (если требуется)
-
-        alert("Карточка успешно сохранена!");
+                  alert("Карточка успешно сохранена!");
+                })
+                .catch(error => {
+                  console.error(error);
+                  alert("Произошла ошибка при сохранении карточки.");
+                });
       } else {
         // Если не все поля заполнены, выводим сообщение об ошибке
         alert("Пожалуйста, заполните все поля формы.");
@@ -121,42 +147,60 @@
 
     // Функция для отображения карточек
     function renderCards() {
-      const cardContainer = document.getElementById('card-container');
-      cardContainer.innerHTML = '';
+      sendRequest('GET', '/db.json')
+              .then(response => {
+                const cards = JSON.parse(response);
+                const cardContainer = document.getElementById('card-container');
+                cardContainer.innerHTML = '';
 
-      cards.forEach((card, index) => {
-        const cardEl = document.createElement('div');
-        cardEl.classList.add('card');
-        cardEl.innerHTML = `
-            <h3>${card.name}</h3>
-            <p>${card.description}</p>
-            <img src="${card.imageUrl}" alt="${card.name}">
-            <p>Код товара: ${card.productCode}</p>
-            <p>Поставщик: ${card.provider}</p>
-            <button onclick="editCard(${index})">Редактировать</button>
-            <button onclick="deleteCard(${index})">Удалить</button>
-          `;
+                cards.forEach(card => {
+                  const cardEl = document.createElement('div');
+                  cardEl.classList.add('card');
+                  cardEl.innerHTML = '<h3>${card.name}</h3>\n' +
+                          '<p>${card.description}</p>\n' +
+                          '<img src="${card.imageUrl}" alt="${card.name}">\n' +
+                          '<p>Код товара: ${card.productCode}</p>\n' +
+                          '<p>Поставщик: ${card.provider}</p>\n' +
+                          '<button onclick="editCard(${card.id})">Редактировать</button>';
 
-        cardContainer.appendChild(cardEl);
-      });
+                  cardContainer.appendChild(cardEl);
+                });
+              })
+              .catch(error => {
+                console.error(error);
+                alert("Произошла ошибка при загрузке карточек.");
+              });
     }
 
     // Функция для редактирования карточки
     function editCard(index) {
       const card = cards[index];
-      document.getElementById('name').value = card.name;
-      document.getElementById('description').value = card.description;
-      document.getElementById('image-url').value = card.imageUrl;
-      document.getElementById('product-code').value = card.productCode;
-      document.getElementById('provider').value = card.provider;
-      cards.splice(index, 1);
-      renderCards();
+      const updateData = {
+        name: document.getElementById('name').value,
+        description: document.getElementById('description').value,
+        imageUrl: document.getElementById('image-url').value,
+        productCode: document.getElementById('product-code').value,
+        provider: document.getElementById('provider').value
+      };
+      sendRequest('PUT', '/db.json', updateData)
+              .then(response => {
+                cards[index] = response.data;
+                renderCards();
+              })
+              .catch(error => {
+                console.error('Error updating card', error);
+              });
     }
 
     // Функция для удаления карточки
     function deleteCard(index) {
-      cards.splice(index, 1);
-      renderCards();
+      const cardId = cards[index].id;
+      sendRequest('DELETE', '/db.json').then(() => {
+        cards.splice(index, 1);
+        renderCards();
+      }).catch((error) => {
+        console.error('Error deleting card:', error);
+      });
     }
 
     // Функция для очистки формы
@@ -168,18 +212,25 @@
       document.getElementById('provider').value = '';
     }
 
-    // Обновляем карточки при загрузке страницы
     window.addEventListener('load', () => {
-      const savedCardsString = localStorage.getItem('cards');
-      if (savedCardsString) {
-        cards = JSON.parse(savedCardsString);
-        renderCards();
-      }
+      sendRequest('GET', '/db.json')
+              .then((response) => {
+                renderCards(response);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
     });
 
     // Сохраняем карточки перед закрытием страницы
     window.addEventListener('beforeunload', () => {
-      localStorage.setItem('cards', JSON.stringify(cards));
+      sendRequest('POST', '/db.json', { cards: cards })
+              .then((response) => {
+                console.log('Сохранение успешное:', response);
+              })
+              .catch((error) => {
+                console.error(error);
+              });
     });
   </script>
 </div>
